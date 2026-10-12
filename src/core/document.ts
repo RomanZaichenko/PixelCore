@@ -4,7 +4,7 @@ export const MIN_DOCUMENT_SIZE = 1;
 export const MAX_DOCUMENT_SIZE = 4096;
 export const DEFAULT_DOCUMENT_SIZE = { width: 1280, height: 720 };
 
-export const DOCUMENTS_PRESETS = [
+export const DOCUMENT_PRESETS = [
   { label: '800 × 600', width: 800, height: 600 },
   { label: '1280 × 800', width: 1280, height: 800 },
   { label: '1920 × 1080', width: 1920, height: 1080 },
