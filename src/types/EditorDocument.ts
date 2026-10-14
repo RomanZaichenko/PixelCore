@@ -1,12 +1,13 @@
-import type Layer from './Layer'
+import type Layer from './Layer';
 
-export type DocumentBackground = 'white' | 'transparent'
+export type DocumentBackground = 'white' | 'transparent';
 
 export interface EditorDocument {
-  id: string
-  title: string
-  width: number
-  height: number
-  background: DocumentBackground
-  layers: Layer[]
+  id: string;
+  title: string;
+  width: number;
+  height: number;
+  background: DocumentBackground;
+  layers: Layer[];
+  activeLayerId: string;
 }
