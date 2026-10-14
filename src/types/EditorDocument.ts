@@ -1,9 +1,12 @@
-import type Layer  from './Layer'
+import type Layer from './Layer'
+
+export type DocumentBackground = 'white' | 'transparent'
 
 export interface EditorDocument {
   id: string
   title: string
-  layers: Layer[]
   width: number
   height: number
+  background: DocumentBackground
+  layers: Layer[]
 }

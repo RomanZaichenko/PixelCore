@@ -7,8 +7,14 @@ import {
   isValidSize,
 } from '../core/document'
 import { useEditorStore } from '../store/useEditorStore'
+import type { DocumentBackground } from '../types/EditorDocument'
 
 const DEFAULT_TITLE = 'Без назви'
+
+const BACKGROUNDS: { value: DocumentBackground; label: string }[] = [
+  { value: 'white', label: 'Білий' },
+  { value: 'transparent', label: 'Прозорий' },
+]
 
 const inputClass =
   'w-full rounded border border-neutral-600 bg-neutral-900 px-2 py-1.5 outline-none focus:border-sky-400'
@@ -18,13 +24,14 @@ function NewDocumentForm({ onDone }: { onDone: () => void }) {
   const [title, setTitle] = useState(DEFAULT_TITLE)
   const [width, setWidth] = useState(DEFAULT_DOCUMENT_SIZE.width)
   const [height, setHeight] = useState(DEFAULT_DOCUMENT_SIZE.height)
+  const [background, setBackground] = useState<DocumentBackground>('white')
 
   const valid = isValidSize(width) && isValidSize(height)
 
   function handleSubmit(e: FormEvent) {
     e.preventDefault()
     if (!valid) return
-    addDocument(title.trim() || DEFAULT_TITLE, width, height)
+    addDocument(title.trim() || DEFAULT_TITLE, width, height, background)
     onDone()
   }
 
@@ -81,6 +88,25 @@ function NewDocumentForm({ onDone }: { onDone: () => void }) {
           />
         </label>
       </div>
+
+      <fieldset className="flex flex-col gap-1 text-sm">
+        <legend className="mb-1">Фон</legend>
+        <div className="flex gap-4">
+          {BACKGROUNDS.map((b) => (
+            <label key={b.value} className="flex items-center gap-2">
+              <input
+                type="radio"
+                name="background"
+                value={b.value}
+                checked={background === b.value}
+                onChange={() => setBackground(b.value)}
+                className="accent-sky-500"
+              />
+              {b.label}
+            </label>
+          ))}
+        </div>
+      </fieldset>
 
       {!valid && (
         <p className="text-xs text-red-400">

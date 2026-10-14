@@ -1,4 +1,4 @@
-import type { EditorDocument } from '../types/EditorDocument';
+import type { DocumentBackground, EditorDocument } from '../types/EditorDocument';
 
 export const MIN_DOCUMENT_SIZE = 1;
 export const MAX_DOCUMENT_SIZE = 4096;
@@ -22,13 +22,15 @@ export function isValidSize(value: number): boolean {
 export function createDocument(
   title: string,
   width: number,
-  height: number
+  height: number,
+  background: DocumentBackground,
 ): EditorDocument {
   return {
     id: crypto.randomUUID(),
     title,
-    layers: [{ id: crypto.randomUUID(), name: 'Layer 1', visible: true }],
     width,
     height,
-  };
+    background,
+    layers: [{ id: crypto.randomUUID(), name: 'Фон', visible: true }],
+  }
 }

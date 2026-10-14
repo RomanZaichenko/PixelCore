@@ -96,7 +96,11 @@ export default function HomeScreen() {
                       style={{ height: PREVIEW_HEIGHT + 24 }}
                     >
                       <div
-                        className="bg-white ring-1 ring-black"
+                        className={`ring-1 ring-black ${
+                          p.background === 'transparent'
+                            ? 'checkerboard'
+                            : 'bg-white'
+                        }`}
                         style={{
                           aspectRatio: `${p.width} / ${p.height}`,
                           width: `min(100%, ${(PREVIEW_HEIGHT * p.width) / p.height}px)`,

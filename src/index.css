@@ -10,3 +10,10 @@ body,
 html {
   color-scheme: dark;
 }
+
+.checkerboard {
+  background-color: #ffffff;
+  background-image: repeating-conic-gradient(#d4d4d4 0% 25%, transparent 0% 50%);
+  background-size: 16px 16px;
+  background-position: 0 0;
+}

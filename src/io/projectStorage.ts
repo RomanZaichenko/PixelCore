@@ -16,6 +16,7 @@ export async function saveProject(doc: EditorDocument): Promise<void> {
     title: doc.title,
     width: doc.width,
     height: doc.height,
+    background: doc.background,
     updatedAt: Date.now(),
   }
   await set(docKey(doc.id), doc)
