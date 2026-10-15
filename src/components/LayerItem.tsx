@@ -1,6 +1,8 @@
-import { useEffect, useRef, useState } from 'react'
-import { Eye, EyeOff } from 'lucide-react'
-import type Layer from '../types/Layer'
+import { useEffect, useRef, useState, type CSSProperties } from 'react'
+import { useSortable } from '@dnd-kit/sortable'
+import { CSS } from '@dnd-kit/utilities'
+import { Eye, EyeOff, GripVertical } from 'lucide-react'
+import type Layer  from '../types/Layer'
 
 interface NameInputProps {
   initial: string
@@ -66,14 +68,44 @@ export default function LayerItem({
   onCommitName,
   onCancelEdit,
 }: Props) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    setActivatorNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: layer.id })
+
+  const style: CSSProperties = {
+    transform: CSS.Transform.toString(transform ? { ...transform, x: 0 } : null),
+    transition,
+  }
+
+  const state = isDragging
+    ? 'relative z-10 border-sky-400 bg-neutral-600 opacity-90 shadow-lg'
+    : active
+      ? 'border-sky-400 bg-neutral-700'
+      : 'border-transparent hover:bg-neutral-700/50'
+
   return (
     <li
-      className={`flex items-center gap-1 border-l-2 px-1 py-1 ${
-        active
-          ? 'border-sky-400 bg-neutral-700'
-          : 'border-transparent hover:bg-neutral-700/50'
-      }`}
+      ref={setNodeRef}
+      style={style}
+      className={`flex items-center gap-1 border-l-2 px-1 py-1 ${state}`}
     >
+      <button
+        type="button"
+        ref={setActivatorNodeRef}
+        aria-label="Перетягнути шар"
+        {...attributes}
+        {...listeners}
+        className="grid h-7 w-5 shrink-0 cursor-grab touch-none place-items-center rounded text-neutral-500 hover:text-neutral-200 active:cursor-grabbing"
+      >
+        <GripVertical size={14} />
+      </button>
+
       <button
         type="button"
         aria-label={layer.visible ? 'Сховати шар' : 'Показати шар'}
