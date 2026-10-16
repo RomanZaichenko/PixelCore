@@ -1,5 +1,6 @@
 import type { EditorDocument } from '../types/EditorDocument';
 import type Layer from '../types/Layer';
+import { fitInside } from './imageFit';
 
 const pixels = new Map<string, HTMLCanvasElement>();
 
@@ -41,3 +42,27 @@ export function composite(
     ctx.drawImage(ensureLayerCanvas(layer, doc.width, doc.height), 0, 0);
   }
 }
+
+
+export function setLayerCanvas(id: string, canvas: HTMLCanvasElement): void {
+  pixels.set(id, canvas);
+}
+
+export function createLayerFromImage(
+  image: ImageBitmap,
+  documentWidth: number,
+  documentHeight: number): HTMLCanvasElement {
+    const canvas = document.createElement('canvas');
+    canvas.width = documentWidth;
+    canvas.height = documentHeight;
+    const context = canvas.getContext('2d');
+    if (context) {
+      const place = fitInside(image.width, image.height, documentWidth, documentHeight);
+      context.imageSmoothingEnabled = true
+      context.imageSmoothingQuality = 'high'
+      context.drawImage(image, place.x, place.y, place.width, place.height);
+    }
+    return canvas;
+}
+
+

@@ -1,11 +1,12 @@
 import { create } from 'zustand';
 import { createDocument, createLayer, nextLayerName } from '../core/document';
-import { disposeLayerCanvas } from '../core/layerPixels';
+import { disposeLayerCanvas, setLayerCanvas, createLayerFromImage } from '../core/layerPixels';
 import type { DialogId } from '../types/Dialog';
 import type {
   DocumentBackground,
   EditorDocument,
 } from '../types/EditorDocument';
+import type Layer from '../types/Layer';
 
 export type MoveDirection = 'up' | 'down';
 
@@ -34,10 +35,22 @@ interface EditorState {
   openDialog: (id: DialogId) => void;
   closeDialog: () => void;
   reorderLayer: (activeId: string, overId: string) => void;
+  addImageLayer: (name: string, image: ImageBitmap) => void
 }
 
 export const selectActiveDocument = (s: EditorState) =>
   s.documents.find((d) => d.id === s.activeDocumentId);
+
+function insertLayerAboveActive(
+  doc: EditorDocument,
+  layer: Layer,
+): EditorDocument {
+  const activeIndex = doc.layers.findIndex((l) => l.id === doc.activeLayerId)
+  const at = activeIndex === -1 ? doc.layers.length : activeIndex + 1
+  const layers = [...doc.layers]
+  layers.splice(at, 0, layer)
+  return { ...doc, layers, activeLayerId: layer.id }
+}
 
 function updateActive(
   s: EditorState,
@@ -85,17 +98,25 @@ export const useEditorStore = create<EditorState>((set, get) => ({
 
   addLayer: () =>
     set((s) =>
-      updateActive(s, (doc) => {
-        const layer = createLayer(nextLayerName(doc.layers));
-        const activeIndex = doc.layers.findIndex(
-          (l) => l.id === doc.activeLayerId
-        );
-        const at = activeIndex === -1 ? doc.layers.length : activeIndex + 1;
-        const layers = [...doc.layers];
-        layers.splice(at, 0, layer);
-        return { ...doc, layers, activeLayerId: layer.id };
-      })
+      updateActive(s, (doc) =>
+        insertLayerAboveActive(doc, createLayer(nextLayerName(doc.layers))),
+      ),
     ),
+
+    addImageLayer: (name, image) => {
+    const doc = selectActiveDocument(get())
+    if (!doc) {
+      image.close()
+      return
+    }
+    const layer = createLayer(name)
+    setLayerCanvas(
+      layer.id,
+      createLayerFromImage(image, doc.width, doc.height),
+    )
+    image.close()
+    set((s) => updateActive(s, (d) => insertLayerAboveActive(d, layer)))
+  },
 
   removeLayer: (id) => {
     const doc = selectActiveDocument(get());

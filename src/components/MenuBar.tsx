@@ -3,6 +3,9 @@ import { useEditorStore } from '../store/useEditorStore';
 import type { Menu } from '../types/Menu';
 import MenuDropdown from './MenuDropdown';
 
+import { importImageFiles } from '../actions/importImages';
+import { pickImageFile } from '../io/importImage';
+
 export default function MenuBar() {
   const openDialog = useEditorStore((s) => s.openDialog);
   const closeDocument = useEditorStore((s) => s.closeDocument);
@@ -18,6 +21,15 @@ export default function MenuBar() {
           id: 'new',
           label: 'Новий документ…',
           onSelect: () => openDialog('newDocument'),
+        },
+        {
+          id: 'import',
+          label: 'Імпортувати зображення…',
+          onSelect: () => {
+            void pickImageFile().then((file) => {
+              if (file) void importImageFiles([file]);
+            });
+          },
         },
         { id: 'home', label: 'На головну', onSelect: closeDocument },
       ],

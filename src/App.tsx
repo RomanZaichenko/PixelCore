@@ -8,12 +8,13 @@ import HomeScreen from './components/HomeScreen';
 import NewDocumentDialog from './components/NewDocumentDialog';
 import { useEditorStore } from './store/useEditorStore';
 import { startAutosave } from './io/autosave';
+import { useBlockFileDrop } from './hooks/useBlockFileDrop';
 
 function App() {
   const hasActiveDocument = useEditorStore((s) => s.activeDocumentId !== null);
 
   useEffect(() => startAutosave(), []);
-
+  useBlockFileDrop();
   return (
     <>
       {hasActiveDocument ? (
