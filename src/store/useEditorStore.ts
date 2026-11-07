@@ -1,12 +1,17 @@
 import { create } from 'zustand';
 import { createDocument, createLayer, nextLayerName } from '../core/document';
-import { disposeLayerCanvas, setLayerCanvas, createLayerFromImage } from '../core/layerPixels';
+import {
+  disposeLayerCanvas,
+  setLayerCanvas,
+  createLayerFromImage,
+} from '../core/layerPixels';
 import type { DialogId } from '../types/Dialog';
 import type {
   DocumentBackground,
   EditorDocument,
 } from '../types/EditorDocument';
 import type Layer from '../types/Layer';
+import type { ToolType } from '../types/Tool';
 
 export type MoveDirection = 'up' | 'down';
 
@@ -14,6 +19,9 @@ interface EditorState {
   documents: EditorDocument[];
   activeDocumentId: string | null;
   activeDialog: DialogId | null;
+  tool: ToolType;
+  color: string;
+  brushSize: number;
 
   addDocument: (
     title: string,
@@ -35,7 +43,11 @@ interface EditorState {
   openDialog: (id: DialogId) => void;
   closeDialog: () => void;
   reorderLayer: (activeId: string, overId: string) => void;
-  addImageLayer: (name: string, image: ImageBitmap) => void
+  addImageLayer: (name: string, image: ImageBitmap) => void;
+
+  setTool: (tool: ToolType) => void;
+  setColor: (color: string) => void;
+  setBrushSize: (size: number) => void;
 }
 
 export const selectActiveDocument = (s: EditorState) =>
@@ -43,13 +55,13 @@ export const selectActiveDocument = (s: EditorState) =>
 
 function insertLayerAboveActive(
   doc: EditorDocument,
-  layer: Layer,
+  layer: Layer
 ): EditorDocument {
-  const activeIndex = doc.layers.findIndex((l) => l.id === doc.activeLayerId)
-  const at = activeIndex === -1 ? doc.layers.length : activeIndex + 1
-  const layers = [...doc.layers]
-  layers.splice(at, 0, layer)
-  return { ...doc, layers, activeLayerId: layer.id }
+  const activeIndex = doc.layers.findIndex((l) => l.id === doc.activeLayerId);
+  const at = activeIndex === -1 ? doc.layers.length : activeIndex + 1;
+  const layers = [...doc.layers];
+  layers.splice(at, 0, layer);
+  return { ...doc, layers, activeLayerId: layer.id };
 }
 
 function updateActive(
@@ -67,6 +79,12 @@ export const useEditorStore = create<EditorState>((set, get) => ({
   documents: [],
   activeDocumentId: null,
   activeDialog: null,
+  tool: 'brush',
+  color: '#1f1f1f',
+  brushSize: 12,
+  setTool: (tool) => set({ tool }),
+  setColor: (color) => set({ color }),
+  setBrushSize: (brushSize) => set({ brushSize }),
 
   addDocument: (title, width, height, background) =>
     set((s) => {
@@ -99,23 +117,23 @@ export const useEditorStore = create<EditorState>((set, get) => ({
   addLayer: () =>
     set((s) =>
       updateActive(s, (doc) =>
-        insertLayerAboveActive(doc, createLayer(nextLayerName(doc.layers))),
-      ),
+        insertLayerAboveActive(doc, createLayer(nextLayerName(doc.layers)))
+      )
     ),
 
-    addImageLayer: (name, image) => {
-    const doc = selectActiveDocument(get())
+  addImageLayer: (name, image) => {
+    const doc = selectActiveDocument(get());
     if (!doc) {
-      image.close()
-      return
+      image.close();
+      return;
     }
-    const layer = createLayer(name)
+    const layer = createLayer(name);
     setLayerCanvas(
       layer.id,
-      createLayerFromImage(image, doc.width, doc.height),
-    )
-    image.close()
-    set((s) => updateActive(s, (d) => insertLayerAboveActive(d, layer)))
+      createLayerFromImage(image, doc.width, doc.height)
+    );
+    image.close();
+    set((s) => updateActive(s, (d) => insertLayerAboveActive(d, layer)));
   },
 
   removeLayer: (id) => {
