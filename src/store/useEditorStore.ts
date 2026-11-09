@@ -3,7 +3,7 @@ import { createDocument, createLayer, nextLayerName } from '../core/document';
 import {
   disposeLayerCanvas,
   setLayerCanvas,
-  createLayerFromImage,
+  createCanvasFromImage,
 } from '../core/layerPixels';
 import type { DialogId } from '../types/Dialog';
 import type {
@@ -11,7 +11,7 @@ import type {
   EditorDocument,
 } from '../types/EditorDocument';
 import type Layer from '../types/Layer';
-import type { ToolType } from '../types/Tool';
+import type { ShapeMode, ToolType } from '../types/Tool'
 
 export type MoveDirection = 'up' | 'down';
 
@@ -22,6 +22,9 @@ interface EditorState {
   tool: ToolType;
   color: string;
   brushSize: number;
+  shapeMode: ShapeMode;
+  tolerance: number;
+  
 
   addDocument: (
     title: string,
@@ -48,6 +51,9 @@ interface EditorState {
   setTool: (tool: ToolType) => void;
   setColor: (color: string) => void;
   setBrushSize: (size: number) => void;
+  setShapeMode: (mode: ShapeMode) => void;
+  setTolerance: (tolerance: number) => void;
+
 }
 
 export const selectActiveDocument = (s: EditorState) =>
@@ -82,9 +88,13 @@ export const useEditorStore = create<EditorState>((set, get) => ({
   tool: 'brush',
   color: '#1f1f1f',
   brushSize: 12,
+  shapeMode: 'fill',
+  tolerance: 32,
   setTool: (tool) => set({ tool }),
   setColor: (color) => set({ color }),
   setBrushSize: (brushSize) => set({ brushSize }),
+  setShapeMode: (shapeMode) => set({ shapeMode }),
+  setTolerance: (tolerance) => set({ tolerance }),
 
   addDocument: (title, width, height, background) =>
     set((s) => {
@@ -130,7 +140,7 @@ export const useEditorStore = create<EditorState>((set, get) => ({
     const layer = createLayer(name);
     setLayerCanvas(
       layer.id,
-      createLayerFromImage(image, doc.width, doc.height)
+      createCanvasFromImage(image, doc.width, doc.height)
     );
     image.close();
     set((s) => updateActive(s, (d) => insertLayerAboveActive(d, layer)));
