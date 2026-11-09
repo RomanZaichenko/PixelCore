@@ -3,7 +3,7 @@ function parseHex(hex: string): [number, number, number] {
   return [(n >> 16) & 255, (n >> 8) & 255, n & 255]
 }
 
-export function floodFill(
+export function fill(
   canvas: HTMLCanvasElement,
   startX: number,
   startY: number,

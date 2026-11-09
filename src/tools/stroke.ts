@@ -24,6 +24,7 @@ export function createStrokeTool({
     label,
     hotkey,
     cursor: 'crosshair',
+    isModifiesPixels: true,
 
     onDown(ctx, e) {
       last = e.point

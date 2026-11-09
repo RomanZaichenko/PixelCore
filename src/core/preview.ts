@@ -1,4 +1,4 @@
-import type PreviewPainter from '../types/Tool'
+import type {PreviewPainter} from '../types/Tool'
 
 let painter: PreviewPainter | null = null
 
