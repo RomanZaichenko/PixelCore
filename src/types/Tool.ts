@@ -1,6 +1,10 @@
 import type  Point  from './Point'
 
-export type ToolType = 'brush' | 'eraser' 
+export type ToolType = 'brush' | 'eraser' | "fill" | "rectangle" | "picker" 
+
+export type ShapeMode = "fill" | "stroke"
+
+export type PreviewPainter = (ctx: CanvasRenderingContext2D) => void
 
 export interface ToolPointerEvent {
   point: Point
@@ -14,7 +18,12 @@ export interface ToolContext {
   layerCanvas: HTMLCanvasElement
   color: string
   size: number
+  tolerance: number
+  shapeMode: ShapeMode
   requestRender: () => void
+  setPreview: (painter: PreviewPainter | null) => void
+  sampleColor: (point: Point) => string | null
+  setColor: (color: string) => void
 }
 
 export default interface Tool {
@@ -22,7 +31,9 @@ export default interface Tool {
   hotkey: string
   cursor: string
   type: ToolType
+  isModifiesPixels: boolean
   onDown: (ctx: ToolContext, e: ToolPointerEvent) => void
-  onMove: (ctx: ToolContext, e: ToolPointerEvent) => void
-  onUp: (ctx: ToolContext, e: ToolPointerEvent) => void
+  onMove?: (ctx: ToolContext, e: ToolPointerEvent) => void
+  onUp?: (ctx: ToolContext, e: ToolPointerEvent) => void
+  onCancel?: (ctx: ToolContext) => void
 }
