@@ -17,7 +17,7 @@ export function createLineTool(): Tool {
     label: 'Лінія',
     hotkey: 'L',
     cursor: 'crosshair',
-    modifiesPixels: true,
+    isModifiesPixels: true,
 
     onDown(ctx, e) {
       start = e.point

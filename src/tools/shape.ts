@@ -30,7 +30,7 @@ export function createShapeTool({ type, label, hotkey }: ShapeToolConfig): Tool 
     label,
     hotkey,
     cursor: 'crosshair',
-    modifiesPixels: true,
+    isModifiesPixels: true,
 
     onDown(ctx, e) {
       start = e.point

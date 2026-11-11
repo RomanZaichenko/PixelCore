@@ -25,7 +25,7 @@ const CONTROLS: Record<ToolType, Controls> = {
   brush: brushLike,
   eraser: { ...brushLike, color: false },
   fill: { color: true, size: false, mode: false, tolerance: true },
-  eyedropper: { color: true, size: false, mode: false, tolerance: false },
+  picker: { color: true, size: false, mode: false, tolerance: false },
   line: brushLike,
   rectangle: filledShape,
   ellipse: filledShape,

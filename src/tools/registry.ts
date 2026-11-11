@@ -19,7 +19,7 @@ export const tools: Record<ToolType, Tool> = {
     erase: true,
   }),
   fill: createFillTool(),
-  eyedropper: createColorPickerTool(),
+  picker: createColorPickerTool(),
   line: createLineTool(),
   rectangle: createShapeTool({
     type: 'rectangle',

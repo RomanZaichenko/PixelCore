@@ -17,7 +17,7 @@ const ICONS: Record<ToolType, LucideIcon> = {
   brush: Brush,
   eraser: Eraser,
   fill: PaintBucket,
-  eyedropper: Pipette,
+  picker: Pipette,
   line: Slash,
   rectangle: Square,
   ellipse: Circle,

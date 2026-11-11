@@ -3,7 +3,7 @@ import type Point from './Point';
 export type ShapeKind = 'rectangle' | 'ellipse' | 'triangle';
 
 export type ToolType =
-  'brush' | 'eraser' | 'eyedropper' | 'fill' | 'line' | ShapeKind;
+  'brush' | 'eraser' | 'picker' | 'fill' | 'line' | ShapeKind;
 
 export type ShapeMode = 'fill' | 'stroke';
 
@@ -34,7 +34,7 @@ export interface Tool {
   label: string;
   hotkey: string;
   cursor: string;
-  modifiesPixels: boolean;
+  isModifiesPixels: boolean;
   onDown: (ctx: ToolContext, e: ToolPointerEvent) => void;
   onMove?: (ctx: ToolContext, e: ToolPointerEvent) => void;
   onUp?: (ctx: ToolContext, e: ToolPointerEvent) => void;
