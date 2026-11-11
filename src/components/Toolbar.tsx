@@ -1,16 +1,32 @@
-import { Brush, Eraser, type LucideIcon } from 'lucide-react'
-import { useEditorStore } from '../store/useEditorStore'
-import { toolList } from '../tools/registry'
-import type {ToolType}  from '../types/Tool'
+import {
+  Brush,
+  Circle,
+  Eraser,
+  PaintBucket,
+  Pipette,
+  Slash,
+  Square,
+  Triangle,
+  type LucideIcon,
+} from 'lucide-react';
+import { useEditorStore } from '../store/useEditorStore';
+import { toolList } from '../tools/registry';
+import type { ToolType } from '../types/Tool';
 
 const ICONS: Record<ToolType, LucideIcon> = {
   brush: Brush,
   eraser: Eraser,
-}
+  fill: PaintBucket,
+  eyedropper: Pipette,
+  line: Slash,
+  rectangle: Square,
+  ellipse: Circle,
+  triangle: Triangle,
+};
 
 export default function Toolbar() {
-  const activeTool = useEditorStore((s) => s.tool)
-  const setTool = useEditorStore((s) => s.setTool)
+  const activeTool = useEditorStore((s) => s.tool);
+  const setTool = useEditorStore((s) => s.setTool);
 
   return (
     <nav
@@ -18,7 +34,8 @@ export default function Toolbar() {
       className="col-start-1 row-start-3 flex flex-col items-center gap-1 border-r border-neutral-700 bg-neutral-800 py-2"
     >
       {toolList.map((tool) => {
-        const Icon = ICONS[tool.type]
+        const Icon = ICONS[tool.type];
+
         return (
           <button
             key={tool.type}
@@ -31,8 +48,8 @@ export default function Toolbar() {
           >
             <Icon size={18} strokeWidth={1.75} />
           </button>
-        )
+        );
       })}
     </nav>
-  )
+  );
 }

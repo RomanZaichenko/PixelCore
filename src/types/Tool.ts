@@ -1,39 +1,42 @@
-import type  Point  from './Point'
+import type Point from './Point';
 
-export type ToolType = 'brush' | 'eraser' | "fill" | "rectangle" | "picker" 
+export type ShapeKind = 'rectangle' | 'ellipse' | 'triangle';
 
-export type ShapeMode = "fill" | "stroke"
+export type ToolType =
+  'brush' | 'eraser' | 'eyedropper' | 'fill' | 'line' | ShapeKind;
 
-export type PreviewPainter = (ctx: CanvasRenderingContext2D) => void
+export type ShapeMode = 'fill' | 'stroke';
+
+export type PreviewPainter = (ctx: CanvasRenderingContext2D) => void;
 
 export interface ToolPointerEvent {
-  point: Point
-  pressure: number
-  shiftKey: boolean
-  altKey: boolean
-  ctrlKey: boolean
+  point: Point;
+  pressure: number;
+  shiftKey: boolean;
+  altKey: boolean;
+  ctrlKey: boolean;
 }
 
 export interface ToolContext {
-  layerCanvas: HTMLCanvasElement
-  color: string
-  size: number
-  tolerance: number
-  shapeMode: ShapeMode
-  requestRender: () => void
-  setPreview: (painter: PreviewPainter | null) => void
-  sampleColor: (point: Point) => string | null
-  setColor: (color: string) => void
+  layerCanvas: HTMLCanvasElement;
+  color: string;
+  size: number;
+  shapeMode: ShapeMode;
+  tolerance: number;
+  requestRender: () => void;
+  setPreview: (painter: PreviewPainter | null) => void;
+  sampleColor: (point: Point) => string | null;
+  setColor: (color: string) => void;
 }
 
-export default interface Tool {
-  label: string
-  hotkey: string
-  cursor: string
-  type: ToolType
-  isModifiesPixels: boolean
-  onDown: (ctx: ToolContext, e: ToolPointerEvent) => void
-  onMove?: (ctx: ToolContext, e: ToolPointerEvent) => void
-  onUp?: (ctx: ToolContext, e: ToolPointerEvent) => void
-  onCancel?: (ctx: ToolContext) => void
+export interface Tool {
+  type: ToolType;
+  label: string;
+  hotkey: string;
+  cursor: string;
+  modifiesPixels: boolean;
+  onDown: (ctx: ToolContext, e: ToolPointerEvent) => void;
+  onMove?: (ctx: ToolContext, e: ToolPointerEvent) => void;
+  onUp?: (ctx: ToolContext, e: ToolPointerEvent) => void;
+  onCancel?: (ctx: ToolContext) => void;
 }

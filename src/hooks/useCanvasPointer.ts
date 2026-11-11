@@ -1,6 +1,7 @@
 import { useEffect, type RefObject } from 'react'
 import { screenToCanvas } from '../core/coords'
-import { ensureLayerCanvas } from '../core/layerPixels'
+import { ensureLayerCanvas, sampleColor } from '../core/layerPixels'
+import { setPreview } from '../core/preview'
 import { requestRender } from '../core/render'
 import { selectActiveDocument, useEditorStore } from '../store/useEditorStore'
 import { useViewportStore } from '../store/useViewportStore'
@@ -43,14 +44,21 @@ export function useCanvasPointer(areaRef: RefObject<HTMLElement | null>) {
       const doc = selectActiveDocument(state)
       if (!doc) return
       const layer = doc.layers.find((l) => l.id === doc.activeLayerId)
-      if (!layer || !layer.visible) return
+      if (!layer) return
 
       const tool = tools[state.tool]
+      if (tool.isModifiesPixels && !layer.visible) return
+
       const ctx: ToolContext = {
         layerCanvas: ensureLayerCanvas(layer, doc.width, doc.height),
         color: state.color,
         size: state.brushSize,
+        shapeMode: state.shapeMode,
+        tolerance: state.tolerance,
         requestRender,
+        setPreview,
+        sampleColor: (p) => sampleColor(doc, p.x, p.y),
+        setColor: state.setColor,
       }
 
       area.setPointerCapture(e.pointerId)
@@ -61,6 +69,7 @@ export function useCanvasPointer(areaRef: RefObject<HTMLElement | null>) {
     function onPointerMove(e: PointerEvent) {
       const current = session
       if (!current || e.pointerId !== current.pointerId) return
+      if (!current.tool.onMove) return
 
       const coalesced = e.getCoalescedEvents()
       const events = coalesced.length > 0 ? coalesced : [e]
@@ -73,7 +82,13 @@ export function useCanvasPointer(areaRef: RefObject<HTMLElement | null>) {
       const current = session
       if (!current || e.pointerId !== current.pointerId) return
       session = null
-      current.tool.onUp(current.ctx, toToolEvent(e))
+
+      if (e.type === 'pointercancel' && current.tool.onCancel) {
+        current.tool.onCancel(current.ctx)
+      } else {
+        current.tool.onUp?.(current.ctx, toToolEvent(e))
+      }
+
       if (area.hasPointerCapture(e.pointerId)) {
         area.releasePointerCapture(e.pointerId)
       }
@@ -88,6 +103,7 @@ export function useCanvasPointer(areaRef: RefObject<HTMLElement | null>) {
       area.removeEventListener('pointermove', onPointerMove)
       area.removeEventListener('pointerup', onPointerEnd)
       area.removeEventListener('pointercancel', onPointerEnd)
+      setPreview(null)
     }
   }, [areaRef])
 }
