@@ -28,6 +28,10 @@ export function ensureLayerCanvas(
   return canvas
 }
 
+export function getLayerCanvas(id: string): HTMLCanvasElement | undefined {
+  return pixels.get(id)
+}
+
 export  function setLayerCanvas(id: string, canvas: HTMLCanvasElement): void {
   pixels.set(id, canvas)
 }

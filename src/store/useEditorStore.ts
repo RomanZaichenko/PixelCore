@@ -2,9 +2,11 @@ import { create } from 'zustand';
 import { createDocument, createLayer, nextLayerName } from '../core/document';
 import {
   disposeLayerCanvas,
+  getLayerCanvas,
   setLayerCanvas,
   createCanvasFromImage,
 } from '../core/layerPixels';
+import { useHistoryStore } from './useHistoryStore';
 import type { DialogId } from '../types/Dialog';
 import type {
   DocumentBackground,
@@ -81,6 +83,51 @@ function updateActive(
   };
 }
 
+function recorded(get: () => EditorState, change: () => void): void {
+  const before = selectActiveDocument(get());
+  if (!before) {
+    change();
+    return;
+  }
+
+  const beforeCanvases = new Map<string, HTMLCanvasElement>();
+  for (const layer of before.layers) {
+    const canvas = getLayerCanvas(layer.id);
+    if (canvas) beforeCanvases.set(layer.id, canvas);
+  }
+
+  change();
+
+  const after = get().documents.find((d) => d.id === before.id);
+  if (
+    !after ||
+    (after.layers === before.layers &&
+      after.activeLayerId === before.activeLayerId)
+  ) {
+    return;
+  }
+
+  const beforeIds = new Set(before.layers.map((l) => l.id));
+  const afterIds = new Set(after.layers.map((l) => l.id));
+  const canvases = new Map<string, HTMLCanvasElement>();
+
+  for (const layer of before.layers) {
+    const canvas = beforeCanvases.get(layer.id);
+    if (!afterIds.has(layer.id) && canvas) canvases.set(layer.id, canvas);
+  }
+  for (const layer of after.layers) {
+    const canvas = getLayerCanvas(layer.id);
+    if (!beforeIds.has(layer.id) && canvas) canvases.set(layer.id, canvas);
+  }
+
+  useHistoryStore.getState().record(before.id, {
+    kind: 'structure',
+    before: { layers: before.layers, activeLayerId: before.activeLayerId },
+    after: { layers: after.layers, activeLayerId: after.activeLayerId },
+    canvases,
+  });
+}
+
 export const useEditorStore = create<EditorState>((set, get) => ({
   documents: [],
   activeDocumentId: null,
@@ -118,6 +165,7 @@ export const useEditorStore = create<EditorState>((set, get) => ({
   removeDocument: (id) => {
     const doc = get().documents.find((d) => d.id === id);
     doc?.layers.forEach((l) => disposeLayerCanvas(l.id));
+    useHistoryStore.getState().clear(id);
     set((s) => ({
       documents: s.documents.filter((d) => d.id !== id),
       activeDocumentId: s.activeDocumentId === id ? null : s.activeDocumentId,
@@ -125,9 +173,11 @@ export const useEditorStore = create<EditorState>((set, get) => ({
   },
 
   addLayer: () =>
-    set((s) =>
-      updateActive(s, (doc) =>
-        insertLayerAboveActive(doc, createLayer(nextLayerName(doc.layers)))
+    recorded(get, () =>
+      set((s) =>
+        updateActive(s, (doc) =>
+          insertLayerAboveActive(doc, createLayer(nextLayerName(doc.layers)))
+        )
       )
     ),
 
@@ -138,85 +188,101 @@ export const useEditorStore = create<EditorState>((set, get) => ({
       return;
     }
     const layer = createLayer(name);
-    setLayerCanvas(
-      layer.id,
-      createCanvasFromImage(image, doc.width, doc.height)
-    );
-    image.close();
-    set((s) => updateActive(s, (d) => insertLayerAboveActive(d, layer)));
+    recorded(get, () => {
+      setLayerCanvas(
+        layer.id,
+        createCanvasFromImage(image, doc.width, doc.height)
+      );
+      image.close();
+      set((s) => updateActive(s, (d) => insertLayerAboveActive(d, layer)));
+    });
   },
 
   removeLayer: (id) => {
     const doc = selectActiveDocument(get());
     if (!doc || doc.layers.length <= 1) return;
-    set((s) =>
-      updateActive(s, (d) => {
-        const index = d.layers.findIndex((l) => l.id === id);
-        if (index === -1) return d;
-        const layers = d.layers.filter((l) => l.id !== id);
-        const activeLayerId =
-          d.activeLayerId === id
-            ? layers[Math.min(index, layers.length - 1)].id
-            : d.activeLayerId;
-        return { ...d, layers, activeLayerId };
-      })
-    );
-    disposeLayerCanvas(id);
+    recorded(get, () => {
+      set((s) =>
+        updateActive(s, (d) => {
+          const index = d.layers.findIndex((l) => l.id === id);
+          if (index === -1) return d;
+          const layers = d.layers.filter((l) => l.id !== id);
+          const activeLayerId =
+            d.activeLayerId === id
+              ? layers[Math.min(index, layers.length - 1)].id
+              : d.activeLayerId;
+          return { ...d, layers, activeLayerId };
+        })
+      );
+      disposeLayerCanvas(id);
+    });
   },
 
   setActiveLayer: (id) =>
     set((s) => updateActive(s, (d) => ({ ...d, activeLayerId: id }))),
 
   toggleLayerVisible: (id) =>
-    set((s) =>
-      updateActive(s, (d) => ({
-        ...d,
-        layers: d.layers.map((l) =>
-          l.id === id ? { ...l, visible: !l.visible } : l
-        ),
-      }))
+    recorded(get, () =>
+      set((s) =>
+        updateActive(s, (d) => ({
+          ...d,
+          layers: d.layers.map((l) =>
+            l.id === id ? { ...l, visible: !l.visible } : l
+          ),
+        }))
+      )
     ),
 
   renameLayer: (id, name) => {
     const trimmed = name.trim();
     if (!trimmed) return;
-    set((s) =>
-      updateActive(s, (d) => ({
-        ...d,
-        layers: d.layers.map((l) =>
-          l.id === id ? { ...l, name: trimmed } : l
-        ),
-      }))
+    recorded(get, () =>
+      set((s) =>
+        updateActive(s, (d) => {
+          const layer = d.layers.find((l) => l.id === id);
+          if (!layer || layer.name === trimmed) return d;
+          return {
+            ...d,
+            layers: d.layers.map((l) =>
+              l.id === id ? { ...l, name: trimmed } : l
+            ),
+          };
+        })
+      )
     );
   },
 
   moveLayer: (id, direction) =>
-    set((s) =>
-      updateActive(s, (d) => {
-        const from = d.layers.findIndex((l) => l.id === id);
-        const to = direction === 'up' ? from + 1 : from - 1;
-        if (from === -1 || to < 0 || to >= d.layers.length) return d;
-        const layers = [...d.layers];
-        const moved = layers[from];
-        layers[from] = layers[to];
-        layers[to] = moved;
-        return { ...d, layers };
-      })
+    recorded(get, () =>
+      set((s) =>
+        updateActive(s, (d) => {
+          const from = d.layers.findIndex((l) => l.id === id);
+          const to = direction === 'up' ? from + 1 : from - 1;
+          if (from === -1 || to < 0 || to >= d.layers.length) return d;
+          const layers = [...d.layers];
+          const moved = layers[from];
+          layers[from] = layers[to];
+          layers[to] = moved;
+          return { ...d, layers };
+        })
+      )
     ),
 
   openDialog: (id) => set({ activeDialog: id }),
   closeDialog: () => set({ activeDialog: null }),
   reorderLayer: (activeId, overId) => {
-    set((s) =>
-      updateActive(s, (d) => {
-        const from = d.layers.findIndex((l) => l.id === activeId);
-        const to = d.layers.findIndex((l) => l.id === overId);
-        if (from === -1 || to === -1 || from === to) return d;
-        const layers = [...d.layers];
-        const [moved] = layers.splice(from, 1);
-        layers.splice(to, 0, moved);
-        return { ...d, layers };
-      })
+    recorded(get, () =>
+      set((s) =>
+        updateActive(s, (d) => {
+          const from = d.layers.findIndex((l) => l.id === activeId);
+          const to = d.layers.findIndex((l) => l.id === overId);
+          if (from === -1 || to === -1 || from === to) return d;
+          const layers = [...d.layers];
+          const [moved] = layers.splice(from, 1);
+          layers.splice(to, 0, moved);
+          return { ...d, layers };
+        })
+      )
     );
   },
 }));

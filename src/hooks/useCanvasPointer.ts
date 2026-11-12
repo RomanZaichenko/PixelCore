@@ -1,6 +1,7 @@
 import { useEffect, type RefObject } from 'react'
 import { screenToCanvas } from '../core/coords'
 import { ensureLayerCanvas, sampleColor } from '../core/layerPixels'
+import { beginPixelChange } from '../core/pixelHistory'
 import { setPreview } from '../core/preview'
 import { requestRender } from '../core/render'
 import { selectActiveDocument, useEditorStore } from '../store/useEditorStore'
@@ -13,6 +14,7 @@ interface Session {
   tool: Tool
   ctx: ToolContext
   pointerId: number
+  pixelChange: ReturnType<typeof beginPixelChange> | null
 }
 
 export function useCanvasPointer(areaRef: RefObject<HTMLElement | null>) {
@@ -61,8 +63,12 @@ export function useCanvasPointer(areaRef: RefObject<HTMLElement | null>) {
         setColor: state.setColor,
       }
 
+      const pixelChange = tool.isModifiesPixels
+        ? beginPixelChange(doc.id, layer.id, ctx.layerCanvas)
+        : null
+
       area.setPointerCapture(e.pointerId)
-      session = { tool, ctx, pointerId: e.pointerId }
+      session = { tool, ctx, pointerId: e.pointerId, pixelChange }
       tool.onDown(ctx, toToolEvent(e))
     }
 
@@ -88,6 +94,7 @@ export function useCanvasPointer(areaRef: RefObject<HTMLElement | null>) {
       } else {
         current.tool.onUp?.(current.ctx, toToolEvent(e))
       }
+      current.pixelChange?.commit()
 
       if (area.hasPointerCapture(e.pointerId)) {
         area.releasePointerCapture(e.pointerId)
@@ -103,6 +110,7 @@ export function useCanvasPointer(areaRef: RefObject<HTMLElement | null>) {
       area.removeEventListener('pointermove', onPointerMove)
       area.removeEventListener('pointerup', onPointerEnd)
       area.removeEventListener('pointercancel', onPointerEnd)
+      session?.pixelChange?.commit()
       setPreview(null)
     }
   }, [areaRef])

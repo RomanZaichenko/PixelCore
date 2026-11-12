@@ -3,12 +3,21 @@ import { useEditorStore } from '../store/useEditorStore';
 import type { Menu } from '../types/Menu';
 import MenuDropdown from './MenuDropdown';
 
+import { redo, undo } from '../actions/history';
 import { importImageFiles } from '../actions/importImages';
 import { pickImageFile } from '../io/importImage';
+import {
+  selectCanRedo,
+  selectCanUndo,
+  useHistoryStore,
+} from '../store/useHistoryStore';
 
 export default function MenuBar() {
   const openDialog = useEditorStore((s) => s.openDialog);
   const closeDocument = useEditorStore((s) => s.closeDocument);
+  const activeDocumentId = useEditorStore((s) => s.activeDocumentId);
+  const canUndo = useHistoryStore(selectCanUndo(activeDocumentId));
+  const canRedo = useHistoryStore(selectCanRedo(activeDocumentId));
   const [openId, setOpenId] = useState<string | null>(null);
   const rootRef = useRef<HTMLElement>(null);
 
@@ -32,6 +41,26 @@ export default function MenuBar() {
           },
         },
         { id: 'home', label: 'На головну', onSelect: closeDocument },
+      ],
+    },
+    {
+      id: 'edit',
+      label: 'Редагування',
+      items: [
+        {
+          id: 'undo',
+          label: 'Скасувати',
+          shortcut: 'Ctrl+Z',
+          disabled: !canUndo,
+          onSelect: undo,
+        },
+        {
+          id: 'redo',
+          label: 'Повторити',
+          shortcut: 'Ctrl+Y',
+          disabled: !canRedo,
+          onSelect: redo,
+        },
       ],
     },
   ];

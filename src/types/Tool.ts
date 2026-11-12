@@ -29,7 +29,7 @@ export interface ToolContext {
   setColor: (color: string) => void;
 }
 
-export interface Tool {
+export default interface Tool {
   type: ToolType;
   label: string;
   hotkey: string;

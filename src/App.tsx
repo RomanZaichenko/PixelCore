@@ -9,12 +9,14 @@ import NewDocumentDialog from './components/NewDocumentDialog';
 import { useEditorStore } from './store/useEditorStore';
 import { startAutosave } from './io/autosave';
 import { useBlockFileDrop } from './hooks/useBlockFileDrop';
+import { useHistoryHotkeys } from './hooks/useHistoryHotkeys';
 
 function App() {
   const hasActiveDocument = useEditorStore((s) => s.activeDocumentId !== null);
 
   useEffect(() => startAutosave(), []);
   useBlockFileDrop();
+  useHistoryHotkeys();
   return (
     <>
       {hasActiveDocument ? (

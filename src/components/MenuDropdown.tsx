@@ -38,10 +38,16 @@ export default function MenuDropdown({
               <button
                 type="button"
                 role="menuitem"
+                disabled={item.disabled}
                 onClick={() => onSelect(item.id)}
-                className="block w-full px-3 py-1.5 text-left hover:bg-neutral-700"
+                className="flex w-full items-center justify-between gap-6 px-3 py-1.5 text-left hover:bg-neutral-700 disabled:cursor-default disabled:text-neutral-500 disabled:hover:bg-transparent"
               >
-                {item.label}
+                <span>{item.label}</span>
+                {item.shortcut && (
+                  <span className="text-xs text-neutral-500">
+                    {item.shortcut}
+                  </span>
+                )}
               </button>
             </li>
           ))}
