@@ -3,7 +3,7 @@ import type Point from './Point';
 export type ShapeKind = 'rectangle' | 'ellipse' | 'triangle';
 
 export type ToolType =
-  'brush' | 'eraser' | 'picker' | 'fill' | 'line' | ShapeKind;
+  'brush' | 'eraser' | 'picker' | 'fill' | 'line' | 'transform' | ShapeKind;
 
 export type ShapeMode = 'fill' | 'stroke';
 
@@ -23,6 +23,7 @@ export interface ToolContext {
   size: number;
   shapeMode: ShapeMode;
   tolerance: number;
+  zoom: number;
   requestRender: () => void;
   setPreview: (painter: PreviewPainter | null) => void;
   sampleColor: (point: Point) => string | null;

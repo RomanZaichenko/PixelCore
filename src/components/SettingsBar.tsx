@@ -1,5 +1,6 @@
 import { useEditorStore } from '../store/useEditorStore'
 import type { ShapeMode, ToolType } from '../types/Tool'
+import TransformControls from './TransformControls'
 
 interface Controls {
   color: boolean
@@ -30,6 +31,7 @@ const CONTROLS: Record<ToolType, Controls> = {
   rectangle: filledShape,
   ellipse: filledShape,
   triangle: filledShape,
+  transform: { color: false, size: false, mode: false, tolerance: false },
 }
 
 const MODES: { value: ShapeMode; label: string }[] = [
@@ -54,6 +56,7 @@ export default function SettingsBar() {
 
   return (
     <div className="col-span-3 col-start-1 row-start-2 flex items-center gap-6 border-b border-neutral-700 bg-neutral-800 px-3 text-sm">
+      {tool === 'transform' && <TransformControls />}
       {controls.color && (
         <label className="flex items-center gap-2">
           Колір

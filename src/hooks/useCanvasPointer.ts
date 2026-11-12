@@ -57,6 +57,7 @@ export function useCanvasPointer(areaRef: RefObject<HTMLElement | null>) {
         size: state.brushSize,
         shapeMode: state.shapeMode,
         tolerance: state.tolerance,
+        zoom: useViewportStore.getState().zoom,
         requestRender,
         setPreview,
         sampleColor: (p) => sampleColor(doc, p.x, p.y),

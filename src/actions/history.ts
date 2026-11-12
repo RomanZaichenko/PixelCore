@@ -14,6 +14,9 @@ import type {
   StructureEntry,
 } from '../types/History';
 
+import { isTransformDirty, resetTransform } from '../core/transform';
+import { refreshTransform } from './transform';
+
 function applyStructure(
   docId: string,
   entry: StructureEntry,
@@ -76,11 +79,18 @@ function applyEntry(
 
 function run(direction: 'undo' | 'redo'): void {
   if (isDrawing()) return;
+  if (isTransformDirty()) {
+    resetTransform();
+    return;
+  }
   const doc = selectActiveDocument(useEditorStore.getState());
   if (!doc) return;
 
   const entry = useHistoryStore.getState().step(doc.id, direction);
-  if (entry) applyEntry(doc.id, entry, direction);
+  if (entry) {
+    applyEntry(doc.id, entry, direction);
+    refreshTransform();
+  }
 }
 
 export const undo = () => run('undo');

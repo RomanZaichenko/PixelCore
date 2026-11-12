@@ -10,13 +10,17 @@ import { useEditorStore } from './store/useEditorStore';
 import { startAutosave } from './io/autosave';
 import { useBlockFileDrop } from './hooks/useBlockFileDrop';
 import { useHistoryHotkeys } from './hooks/useHistoryHotkeys';
+import { useTransformHotkeys } from './hooks/useTransformHotkeys';
+import { startTransformController } from './actions/transform';
 
 function App() {
   const hasActiveDocument = useEditorStore((s) => s.activeDocumentId !== null);
 
   useEffect(() => startAutosave(), []);
+  useEffect(() => startTransformController(), []);
   useBlockFileDrop();
   useHistoryHotkeys();
+  useTransformHotkeys();
   return (
     <>
       {hasActiveDocument ? (

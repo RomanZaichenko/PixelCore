@@ -1,9 +1,11 @@
-import type { Tool, ToolType } from '../types/Tool';
+import type { ToolType } from '../types/Tool';
+import type Tool from '../types/Tool';
 import { createColorPickerTool } from './colorPicker';
 import { createFillTool } from './fill';
 import { createLineTool } from './line';
 import { createShapeTool } from './shape';
 import { createStrokeTool } from './stroke';
+import { createTransformTool } from './transform';
 
 export const tools: Record<ToolType, Tool> = {
   brush: createStrokeTool({
@@ -36,6 +38,7 @@ export const tools: Record<ToolType, Tool> = {
     label: 'Трикутник',
     hotkey: 'T',
   }),
+  transform: createTransformTool(),
 };
 
 export const toolList: Tool[] = Object.values(tools);

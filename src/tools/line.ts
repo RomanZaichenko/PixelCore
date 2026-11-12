@@ -1,15 +1,16 @@
-import { drawLine, segmentFromDrag } from '../core/shapes'
-import type Point from '../types/Point'
-import type { Tool, ToolContext, ToolPointerEvent } from '../types/Tool'
+import { drawLine, segmentFromDrag } from '../core/shapes';
+import type Point from '../types/Point';
+import type { ToolContext, ToolPointerEvent } from '../types/Tool';
+import type Tool from '../types/Tool';
 
 export function createLineTool(): Tool {
-  let start: Point | null = null
+  let start: Point | null = null;
 
   function updatePreview(ctx: ToolContext, e: ToolPointerEvent) {
-    if (!start) return
-    const segment = segmentFromDrag(start, e.point, e.shiftKey, e.altKey)
-    ctx.setPreview((c) => drawLine(c, segment, ctx.color, ctx.size))
-    ctx.requestRender()
+    if (!start) return;
+    const segment = segmentFromDrag(start, e.point, e.shiftKey, e.altKey);
+    ctx.setPreview((c) => drawLine(c, segment, ctx.color, ctx.size));
+    ctx.requestRender();
   }
 
   return {
@@ -20,27 +21,27 @@ export function createLineTool(): Tool {
     isModifiesPixels: true,
 
     onDown(ctx, e) {
-      start = e.point
-      updatePreview(ctx, e)
+      start = e.point;
+      updatePreview(ctx, e);
     },
 
     onMove: updatePreview,
 
     onUp(ctx, e) {
-      if (!start) return
-      const segment = segmentFromDrag(start, e.point, e.shiftKey, e.altKey)
-      start = null
-      ctx.setPreview(null)
+      if (!start) return;
+      const segment = segmentFromDrag(start, e.point, e.shiftKey, e.altKey);
+      start = null;
+      ctx.setPreview(null);
 
-      const target = ctx.layerCanvas.getContext('2d')
-      if (target) drawLine(target, segment, ctx.color, ctx.size)
-      ctx.requestRender()
+      const target = ctx.layerCanvas.getContext('2d');
+      if (target) drawLine(target, segment, ctx.color, ctx.size);
+      ctx.requestRender();
     },
 
     onCancel(ctx) {
-      start = null
-      ctx.setPreview(null)
-      ctx.requestRender()
+      start = null;
+      ctx.setPreview(null);
+      ctx.requestRender();
     },
-  }
+  };
 }

@@ -7,6 +7,7 @@ import { hasFiles } from '../io/importImage';
 import { selectActiveDocument, useEditorStore } from '../store/useEditorStore';
 import { useViewportStore } from '../store/useViewportStore';
 import { tools } from '../tools/registry';
+import TransformOverlay from './TransformOverlay';
 
 export default function CanvasArea() {
   const doc = useEditorStore(selectActiveDocument);
@@ -126,7 +127,8 @@ export default function CanvasArea() {
   }
 
   const activeLayer = doc?.layers.find((l) => l.id === doc.activeLayerId);
-  const blocked = tools[tool].isModifiesPixels && !(activeLayer?.visible ?? false);
+  const blocked =
+    tools[tool].isModifiesPixels && !(activeLayer?.visible ?? false);
   const ready = doc !== undefined && viewDocId === doc.id;
   const checker = 16 / zoom;
 
@@ -159,7 +161,7 @@ export default function CanvasArea() {
           }}
         />
       )}
-
+      <TransformOverlay />
       {dragging && (
         <div className="pointer-events-none absolute inset-3 z-10 grid place-items-center rounded-lg border-2 border-dashed border-sky-400 bg-sky-400/10">
           <p className="rounded bg-neutral-900/80 px-4 py-2 text-sm">

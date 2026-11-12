@@ -7,6 +7,7 @@ import {
   Slash,
   Square,
   Triangle,
+  Move,
   type LucideIcon,
 } from 'lucide-react';
 import { useEditorStore } from '../store/useEditorStore';
@@ -22,6 +23,7 @@ const ICONS: Record<ToolType, LucideIcon> = {
   rectangle: Square,
   ellipse: Circle,
   triangle: Triangle,
+  transform: Move,
 };
 
 export default function Toolbar() {
