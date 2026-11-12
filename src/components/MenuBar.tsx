@@ -7,6 +7,11 @@ import { redo, undo } from '../actions/history';
 import { importImageFiles } from '../actions/importImages';
 import { pickImageFile } from '../io/importImage';
 import {
+  exportActiveDocument,
+  pickAndImportProject,
+  saveActiveProjectFile,
+} from '../actions/projectFiles';
+import {
   selectCanRedo,
   selectCanUndo,
   useHistoryStore,
@@ -33,12 +38,43 @@ export default function MenuBar() {
         },
         {
           id: 'import',
-          label: 'Імпортувати зображення…',
+          label: 'Імпортувати зображення (PNG, JPG, SVG)…',
           onSelect: () => {
             void pickImageFile().then((file) => {
               if (file) void importImageFiles([file]);
             });
           },
+        },
+        {
+          id: 'open-pxc',
+          label: 'Відкрити проєкт (.pxc)…',
+          onSelect: () => void pickAndImportProject(),
+        },
+        {
+          id: 'save-pxc',
+          label: 'Зберегти проєкт (.pxc)',
+          shortcut: 'Ctrl+S',
+          onSelect: () => void saveActiveProjectFile(),
+        },
+        {
+          id: 'export-png',
+          label: 'Експорт як PNG',
+          onSelect: () => void exportActiveDocument('png'),
+        },
+        {
+          id: 'export-jpg',
+          label: 'Експорт як JPG',
+          onSelect: () => void exportActiveDocument('jpeg'),
+        },
+        {
+          id: 'export-webp',
+          label: 'Експорт як WebP',
+          onSelect: () => void exportActiveDocument('webp'),
+        },
+        {
+          id: 'export-svg',
+          label: 'Експорт як SVG',
+          onSelect: () => void exportActiveDocument('svg'),
         },
         { id: 'home', label: 'На головну', onSelect: closeDocument },
       ],

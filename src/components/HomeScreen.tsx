@@ -1,50 +1,53 @@
-import { useEffect, useState } from 'react'
-import { deleteProject, listProjects, loadProject } from '../io/projectStorage'
-import { useEditorStore } from '../store/useEditorStore'
-import type { DocumentMeta } from '../types/DocumentMeta'
+import { useEffect, useState } from 'react';
+import { deleteProject, listProjects, loadProject } from '../io/projectStorage';
+import { useEditorStore } from '../store/useEditorStore';
+import type { DocumentMeta } from '../types/DocumentMeta';
+import { pickAndImportProject } from '../actions/projectFiles';
 
-const PREVIEW_HEIGHT = 104
+const PREVIEW_HEIGHT = 104;
 
 const dateFormat = new Intl.DateTimeFormat('uk-UA', {
   dateStyle: 'medium',
   timeStyle: 'short',
-})
+});
 
 export default function HomeScreen() {
-  const [projects, setProjects] = useState<DocumentMeta[] | null>(null)
-  const openDialog = useEditorStore((s) => s.openDialog)
-  const openDocument = useEditorStore((s) => s.openDocument)
-  const removeDocument = useEditorStore((s) => s.removeDocument)
+  const [projects, setProjects] = useState<DocumentMeta[] | null>(null);
+  const openDialog = useEditorStore((s) => s.openDialog);
+  const openDocument = useEditorStore((s) => s.openDocument);
+  const removeDocument = useEditorStore((s) => s.removeDocument);
 
   useEffect(() => {
-    let cancelled = false
+    let cancelled = false;
     listProjects()
       .then((list) => {
-        if (!cancelled) setProjects(list)
+        if (!cancelled) setProjects(list);
       })
       .catch(() => {
-        if (!cancelled) setProjects([])
-      })
+        if (!cancelled) setProjects([]);
+      });
     return () => {
-      cancelled = true
-    }
-  }, [])
+      cancelled = true;
+    };
+  }, []);
 
   async function handleOpen(id: string) {
     const inMemory = useEditorStore
       .getState()
-      .documents.find((d) => d.id === id)
-    const doc = inMemory ?? (await loadProject(id))
-    if (doc) openDocument(doc)
+      .documents.find((d) => d.id === id);
+    const doc = inMemory ?? (await loadProject(id));
+    if (doc) openDocument(doc);
   }
 
   async function handleDelete(project: DocumentMeta) {
-    if (!window.confirm(`Видалити «${project.title}»? Це не можна скасувати.`)) {
-      return
+    if (
+      !window.confirm(`Видалити «${project.title}»? Це не можна скасувати.`)
+    ) {
+      return;
     }
-    await deleteProject(project.id)
-    removeDocument(project.id)
-    setProjects((list) => list?.filter((p) => p.id !== project.id) ?? null)
+    await deleteProject(project.id);
+    removeDocument(project.id);
+    setProjects((list) => list?.filter((p) => p.id !== project.id) ?? null);
   }
 
   return (
@@ -57,13 +60,22 @@ export default function HomeScreen() {
               Створи новий документ або продовжи роботу над попереднім.
             </p>
           </div>
-          <button
-            type="button"
-            onClick={() => openDialog('newDocument')}
-            className="rounded bg-sky-500 px-4 py-2 text-sm font-medium text-neutral-950 hover:bg-sky-400"
-          >
-            Новий документ
-          </button>
+          <div className="flex gap-2">
+            <button
+              type="button"
+              onClick={() => void pickAndImportProject()}
+              className="rounded border border-neutral-600 px-4 py-2 text-sm font-medium hover:border-neutral-400"
+            >
+              Відкрити .pxc
+            </button>
+            <button
+              type="button"
+              onClick={() => openDialog('newDocument')}
+              className="rounded bg-sky-500 px-4 py-2 text-sm font-medium text-neutral-950 hover:bg-sky-400"
+            >
+              Новий документ
+            </button>
+          </div>
         </header>
 
         <section aria-labelledby="recent-title">
@@ -133,5 +145,5 @@ export default function HomeScreen() {
         </section>
       </div>
     </div>
-  )
+  );
 }

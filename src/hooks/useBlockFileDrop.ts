@@ -1,16 +1,24 @@
-import { useEffect } from 'react'
-import { hasFiles } from '../io/importImage'
+import { useEffect } from 'react';
+import { importImageFiles } from '../actions/importImages';
+import { hasFiles } from '../io/importImage';
 
 export function useBlockFileDrop() {
   useEffect(() => {
-    function block(e: DragEvent) {
-      if (hasFiles(e.dataTransfer)) e.preventDefault()
+    function onDragOver(e: DragEvent) {
+      if (hasFiles(e.dataTransfer)) e.preventDefault();
     }
-    window.addEventListener('dragover', block)
-    window.addEventListener('drop', block)
+    function onDrop(e: DragEvent) {
+      if (!hasFiles(e.dataTransfer)) return;
+      const handled = e.defaultPrevented;
+      e.preventDefault();
+      if (handled) return;
+      void importImageFiles(Array.from(e.dataTransfer?.files ?? []));
+    }
+    window.addEventListener('dragover', onDragOver);
+    window.addEventListener('drop', onDrop);
     return () => {
-      window.removeEventListener('dragover', block)
-      window.removeEventListener('drop', block)
-    }
-  }, [])
+      window.removeEventListener('dragover', onDragOver);
+      window.removeEventListener('drop', onDrop);
+    };
+  }, []);
 }

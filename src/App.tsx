@@ -11,6 +11,7 @@ import { startAutosave } from './io/autosave';
 import { useBlockFileDrop } from './hooks/useBlockFileDrop';
 import { useHistoryHotkeys } from './hooks/useHistoryHotkeys';
 import { useTransformHotkeys } from './hooks/useTransformHotkeys';
+import { useProjectHotkeys } from './hooks/useProjectHotkeys';
 import { startTransformController } from './actions/transform';
 
 function App() {
@@ -21,6 +22,7 @@ function App() {
   useBlockFileDrop();
   useHistoryHotkeys();
   useTransformHotkeys();
+  useProjectHotkeys();
   return (
     <>
       {hasActiveDocument ? (
