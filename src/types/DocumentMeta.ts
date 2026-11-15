@@ -7,4 +7,5 @@ export interface DocumentMeta {
   height: number
   background: DocumentBackground
   updatedAt: number
+  thumbnail?: string
 }

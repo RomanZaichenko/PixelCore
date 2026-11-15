@@ -1,28 +1,63 @@
-import { useEffect, type RefObject } from 'react'
-import { screenToCanvas } from '../core/coords'
-import { ensureLayerCanvas, sampleColor } from '../core/layerPixels'
-import { beginPixelChange } from '../core/pixelHistory'
-import { setPreview } from '../core/preview'
-import { requestRender } from '../core/render'
-import { selectActiveDocument, useEditorStore } from '../store/useEditorStore'
-import { useViewportStore } from '../store/useViewportStore'
-import { tools } from '../tools/registry'
-import type { ToolContext, ToolPointerEvent } from '../types/Tool'
-import type Tool from '../types/Tool'
+import { useEffect, type RefObject } from 'react';
+import { screenToCanvas } from '../core/coords';
+import {
+  ensureLayerCanvas,
+  sampleColor,
+  setLayerCanvas,
+} from '../core/layerPixels';
+import { beginPixelChange } from '../core/pixelHistory';
+import { setPreview } from '../core/preview';
+import { requestRender } from '../core/render';
+import { selectActiveDocument, useEditorStore } from '../store/useEditorStore';
+import { useViewportStore } from '../store/useViewportStore';
+import { tools } from '../tools/registry';
+import type { ToolContext, ToolPointerEvent } from '../types/Tool';
+import type Tool from '../types/Tool';
 
 interface Session {
-  tool: Tool
-  ctx: ToolContext
-  pointerId: number
-  pixelChange: ReturnType<typeof beginPixelChange> | null
+  tool: Tool;
+  ctx: ToolContext;
+  pointerId: number;
+  pixelChange: ReturnType<typeof beginPixelChange> | null;
+  /** Тимчасове полотно для інструментів, що створюють новий шар */
+  scratch: HTMLCanvasElement | null;
+}
+
+function createScratchCanvas(width: number, height: number) {
+  const canvas = document.createElement('canvas');
+  canvas.width = width;
+  canvas.height = height;
+  return canvas;
+}
+
+function isCanvasBlank(canvas: HTMLCanvasElement): boolean {
+  const ctx = canvas.getContext('2d', { willReadFrequently: true });
+  if (!ctx) return true;
+  const data = new Uint32Array(
+    ctx.getImageData(0, 0, canvas.width, canvas.height).data.buffer
+  );
+  for (let i = 0; i < data.length; i++) {
+    if (data[i] !== 0) return false;
+  }
+  return true;
+}
+
+/** Додає новий шар над активним і кладе в нього намальовану фігуру. */
+function commitShapeLayer(canvas: HTMLCanvasElement) {
+  if (isCanvasBlank(canvas)) return;
+  useEditorStore.getState().addLayer();
+  const doc = selectActiveDocument(useEditorStore.getState());
+  if (!doc) return;
+  setLayerCanvas(doc.activeLayerId, canvas);
+  requestRender();
 }
 
 export function useCanvasPointer(areaRef: RefObject<HTMLElement | null>) {
   useEffect(() => {
-    const el = areaRef.current
-    if (!el) return
-    const area: HTMLElement = el
-    let session: Session | null = null
+    const el = areaRef.current;
+    if (!el) return;
+    const area: HTMLElement = el;
+    let session: Session | null = null;
 
     function toToolEvent(e: PointerEvent): ToolPointerEvent {
       return {
@@ -30,29 +65,34 @@ export function useCanvasPointer(areaRef: RefObject<HTMLElement | null>) {
           e.clientX,
           e.clientY,
           area.getBoundingClientRect(),
-          useViewportStore.getState(),
+          useViewportStore.getState()
         ),
         pressure: e.pressure,
         shiftKey: e.shiftKey,
         altKey: e.altKey,
         ctrlKey: e.ctrlKey,
-      }
+      };
     }
 
     function onPointerDown(e: PointerEvent) {
-      if (e.button !== 0 || session) return
+      if (e.button !== 0 || session) return;
 
-      const state = useEditorStore.getState()
-      const doc = selectActiveDocument(state)
-      if (!doc) return
-      const layer = doc.layers.find((l) => l.id === doc.activeLayerId)
-      if (!layer) return
+      const state = useEditorStore.getState();
+      const doc = selectActiveDocument(state);
+      if (!doc) return;
+      const layer = doc.layers.find((l) => l.id === doc.activeLayerId);
+      if (!layer) return;
 
-      const tool = tools[state.tool]
-      if (tool.isModifiesPixels && !layer.visible) return
+      const tool = tools[state.tool];
+      const createsLayer = tool.createsLayer === true;
+      if (tool.isModifiesPixels && !createsLayer && !layer.visible) return;
+
+      const scratch = createsLayer
+        ? createScratchCanvas(doc.width, doc.height)
+        : null;
 
       const ctx: ToolContext = {
-        layerCanvas: ensureLayerCanvas(layer, doc.width, doc.height),
+        layerCanvas: scratch ?? ensureLayerCanvas(layer, doc.width, doc.height),
         color: state.color,
         size: state.brushSize,
         shapeMode: state.shapeMode,
@@ -62,57 +102,61 @@ export function useCanvasPointer(areaRef: RefObject<HTMLElement | null>) {
         setPreview,
         sampleColor: (p) => sampleColor(doc, p.x, p.y),
         setColor: state.setColor,
-      }
+      };
 
-      const pixelChange = tool.isModifiesPixels
-        ? beginPixelChange(doc.id, layer.id, ctx.layerCanvas)
-        : null
+      const pixelChange =
+        tool.isModifiesPixels && !createsLayer
+          ? beginPixelChange(doc.id, layer.id, ctx.layerCanvas)
+          : null;
 
-      area.setPointerCapture(e.pointerId)
-      session = { tool, ctx, pointerId: e.pointerId, pixelChange }
-      tool.onDown(ctx, toToolEvent(e))
+      area.setPointerCapture(e.pointerId);
+      session = { tool, ctx, pointerId: e.pointerId, pixelChange, scratch };
+      tool.onDown(ctx, toToolEvent(e));
     }
 
     function onPointerMove(e: PointerEvent) {
-      const current = session
-      if (!current || e.pointerId !== current.pointerId) return
-      if (!current.tool.onMove) return
+      const current = session;
+      if (!current || e.pointerId !== current.pointerId) return;
+      if (!current.tool.onMove) return;
 
-      const coalesced = e.getCoalescedEvents()
-      const events = coalesced.length > 0 ? coalesced : [e]
+      const coalesced = e.getCoalescedEvents();
+      const events = coalesced.length > 0 ? coalesced : [e];
       for (const ev of events) {
-        current.tool.onMove(current.ctx, toToolEvent(ev))
+        current.tool.onMove(current.ctx, toToolEvent(ev));
       }
     }
 
     function onPointerEnd(e: PointerEvent) {
-      const current = session
-      if (!current || e.pointerId !== current.pointerId) return
-      session = null
+      const current = session;
+      if (!current || e.pointerId !== current.pointerId) return;
+      session = null;
 
       if (e.type === 'pointercancel' && current.tool.onCancel) {
-        current.tool.onCancel(current.ctx)
+        current.tool.onCancel(current.ctx);
       } else {
-        current.tool.onUp?.(current.ctx, toToolEvent(e))
+        current.tool.onUp?.(current.ctx, toToolEvent(e));
       }
-      current.pixelChange?.commit()
+      current.pixelChange?.commit();
+      if (current.scratch && e.type !== 'pointercancel') {
+        commitShapeLayer(current.scratch);
+      }
 
       if (area.hasPointerCapture(e.pointerId)) {
-        area.releasePointerCapture(e.pointerId)
+        area.releasePointerCapture(e.pointerId);
       }
     }
 
-    area.addEventListener('pointerdown', onPointerDown)
-    area.addEventListener('pointermove', onPointerMove)
-    area.addEventListener('pointerup', onPointerEnd)
-    area.addEventListener('pointercancel', onPointerEnd)
+    area.addEventListener('pointerdown', onPointerDown);
+    area.addEventListener('pointermove', onPointerMove);
+    area.addEventListener('pointerup', onPointerEnd);
+    area.addEventListener('pointercancel', onPointerEnd);
     return () => {
-      area.removeEventListener('pointerdown', onPointerDown)
-      area.removeEventListener('pointermove', onPointerMove)
-      area.removeEventListener('pointerup', onPointerEnd)
-      area.removeEventListener('pointercancel', onPointerEnd)
-      session?.pixelChange?.commit()
-      setPreview(null)
-    }
-  }, [areaRef])
+      area.removeEventListener('pointerdown', onPointerDown);
+      area.removeEventListener('pointermove', onPointerMove);
+      area.removeEventListener('pointerup', onPointerEnd);
+      area.removeEventListener('pointercancel', onPointerEnd);
+      session?.pixelChange?.commit();
+      setPreview(null);
+    };
+  }, [areaRef]);
 }

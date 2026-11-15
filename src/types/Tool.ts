@@ -36,6 +36,7 @@ export default interface Tool {
   hotkey: string;
   cursor: string;
   isModifiesPixels: boolean;
+  createsLayer?: boolean;
   onDown: (ctx: ToolContext, e: ToolPointerEvent) => void;
   onMove?: (ctx: ToolContext, e: ToolPointerEvent) => void;
   onUp?: (ctx: ToolContext, e: ToolPointerEvent) => void;

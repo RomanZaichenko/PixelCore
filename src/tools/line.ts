@@ -19,6 +19,7 @@ export function createLineTool(): Tool {
     hotkey: 'L',
     cursor: 'crosshair',
     isModifiesPixels: true,
+    createsLayer: true,
 
     onDown(ctx, e) {
       start = e.point;

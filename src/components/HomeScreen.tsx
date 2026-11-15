@@ -117,7 +117,16 @@ export default function HomeScreen() {
                           aspectRatio: `${p.width} / ${p.height}`,
                           width: `min(100%, ${(PREVIEW_HEIGHT * p.width) / p.height}px)`,
                         }}
-                      />
+                      >
+                        {p.thumbnail && (
+                          <img
+                            src={p.thumbnail}
+                            alt=""
+                            draggable={false}
+                            className="block h-full w-full"
+                          />
+                        )}
+                      </div>
                     </div>
                     <div className="p-3">
                       <p className="truncate text-sm font-medium">{p.title}</p>
