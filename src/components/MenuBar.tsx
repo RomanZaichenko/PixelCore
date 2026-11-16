@@ -1,9 +1,10 @@
 import { useEffect, useRef, useState } from 'react';
-import { useEditorStore } from '../store/useEditorStore';
+import { selectActiveDocument, useEditorStore } from '../store/useEditorStore';
 import type { Menu } from '../types/Menu';
 import MenuDropdown from './MenuDropdown';
 
 import { redo, undo } from '../actions/history';
+import { applyFilterToActiveLayer, openFilterDialog } from '../actions/filters';
 import { importImageFiles } from '../actions/importImages';
 import { pickImageFile } from '../io/importImage';
 import {
@@ -23,6 +24,10 @@ export default function MenuBar() {
   const activeDocumentId = useEditorStore((s) => s.activeDocumentId);
   const canUndo = useHistoryStore(selectCanUndo(activeDocumentId));
   const canRedo = useHistoryStore(selectCanRedo(activeDocumentId));
+  const canFilter = useEditorStore((s) => {
+    const doc = selectActiveDocument(s);
+    return !!doc?.layers.find((l) => l.id === doc.activeLayerId)?.visible;
+  });
   const [openId, setOpenId] = useState<string | null>(null);
   const rootRef = useRef<HTMLElement>(null);
 
@@ -96,6 +101,54 @@ export default function MenuBar() {
           shortcut: 'Ctrl+Y',
           disabled: !canRedo,
           onSelect: redo,
+        },
+      ],
+    },
+    {
+      id: 'filters',
+      label: 'Фільтри',
+      items: [
+        {
+          id: 'filter-grayscale',
+          label: 'Чорно-білий',
+          disabled: !canFilter,
+          onSelect: () => applyFilterToActiveLayer({ kind: 'grayscale' }),
+        },
+        {
+          id: 'filter-invert',
+          label: 'Інверсія',
+          disabled: !canFilter,
+          onSelect: () => applyFilterToActiveLayer({ kind: 'invert' }),
+        },
+        {
+          id: 'filter-sepia',
+          label: 'Сепія',
+          disabled: !canFilter,
+          onSelect: () => applyFilterToActiveLayer({ kind: 'sepia' }),
+        },
+        {
+          id: 'filter-brightness',
+          label: 'Яскравість…',
+          disabled: !canFilter,
+          onSelect: () => openFilterDialog('brightness'),
+        },
+        {
+          id: 'filter-contrast',
+          label: 'Контраст…',
+          disabled: !canFilter,
+          onSelect: () => openFilterDialog('contrast'),
+        },
+        {
+          id: 'filter-saturation',
+          label: 'Насиченість…',
+          disabled: !canFilter,
+          onSelect: () => openFilterDialog('saturation'),
+        },
+        {
+          id: 'filter-blur',
+          label: 'Розмиття…',
+          disabled: !canFilter,
+          onSelect: () => openFilterDialog('blur'),
         },
       ],
     },

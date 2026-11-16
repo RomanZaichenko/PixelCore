@@ -6,6 +6,7 @@ import CanvasArea from './components/CanvasArea';
 import MenuBar from './components/MenuBar';
 import HomeScreen from './components/HomeScreen';
 import NewDocumentDialog from './components/NewDocumentDialog';
+import FilterDialog from './components/FilterDialog';
 import { useEditorStore } from './store/useEditorStore';
 import { startAutosave } from './io/autosave';
 import { useBlockFileDrop } from './hooks/useBlockFileDrop';
@@ -37,6 +38,7 @@ function App() {
         <HomeScreen />
       )}
       <NewDocumentDialog />
+      <FilterDialog />
     </>
   );
 }
